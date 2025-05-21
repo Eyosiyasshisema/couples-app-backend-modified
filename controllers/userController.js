@@ -168,7 +168,7 @@ export const changePassword = async (req, res) => {
                                 if (updateResult.rows.length === 1) {
                                     return res.status(200).json({ success: true, message: "Password changed successfully", user: updateResult.rows[0] });
                                 } else {
-                                    return res.status(404).json({ success: false, message: "User not found" }); // Should ideally not reach here
+                                    return res.status(404).json({ success: false, message: "User not found" }); 
                                 }
                             } catch (dbError) {
                                 return handleDatabaseError(res, dbError);
