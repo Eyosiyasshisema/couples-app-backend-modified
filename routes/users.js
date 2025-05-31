@@ -1,7 +1,9 @@
 import express from "express";
 import * as userController from "../controllers/userController.js";
 import { validateRegistration } from "../middleware/validationMiddleware.js";
-import { verifyToken,checkPasswordComplexity,loginLimiter} from "../middleware/jwtVerify.js";
+import { verifyToken } from "../middleware/jwtVerify.js"; 
+import { checkPasswordComplexity } from "../middleware/passwordComplexityMiddleware.js"
+import { loginLimiter } from "../middleware/rateLimitMiddleware.js";
 
 const usersRouter = express.Router(); 
 

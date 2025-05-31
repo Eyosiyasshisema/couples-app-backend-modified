@@ -1,15 +1,6 @@
-import {answersRouter } from "./routes/answers.js"
-import {gamesRouter } from "./routes/games.js"
-import {predictionsRouter } from "./routes/predictions.js"
-import {questionsRouter } from "./routes/questions.js"
-import {scoresRouter } from "./routes/scores.js"
-import {usersRouter } from "./routes/users.js"
- 
+import gamesRouterDefault from "./games.js";
+import usersRouterDefault from "./users.js";
 export {
-    answersRouter,
-    gamesRouter,
-    predictionsRouter,
-    questionsRouter,
-    scoresRouter,
-    usersRouter
+  usersRouterDefault as usersRouter,      
+  gamesRouterDefault as gamesRouter       
 };

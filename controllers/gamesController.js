@@ -1,9 +1,8 @@
-// controllers/gamesController.js
-import { v4 as uuidv4 } from 'uuid';
-import { query } from "../db.js"; // Your database utility
-import { io } from '../server.js'; // Import the Socket.IO instance
-import { userSocketMap } from '../server.js'; 
 
+import { v4 as uuidv4 } from 'uuid';
+import { query } from "../db.js"; 
+import { io } from '../server.js'; 
+import { userSocketMap } from '../server.js'; 
 
 async function getFullGameState(gameId) {
  
@@ -69,8 +68,6 @@ async function getFullGameState(gameId) {
     };
 }
 
-
-
 export const createGame = async (req, res) => {
     try {
         const user1Id = req.user.userId; 
@@ -82,7 +79,6 @@ export const createGame = async (req, res) => {
 
         const gameId = uuidv4();
 
-        
         await query(
             'INSERT INTO games (game_id, user1_id, user2_id, selected_category_id, status, current_round) VALUES ($1, $2, $3, $4, $5, $6);',
             [gameId, user1Id, user2Id, selectedCategoryId, 'inProgress', 1] // Game starts immediately
@@ -123,7 +119,6 @@ export const createGame = async (req, res) => {
     }
 };
 
-
 export const getGame = async (req, res) => {
     try {
         const { gameId } = req.params;
@@ -146,7 +141,6 @@ export const getGame = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to retrieve game." });
     }
 };
-
 
 export const submitAnswer = async (req, res) => {
     try {
@@ -279,7 +273,6 @@ export const submitPrediction = async (req, res) => {
     }
 };
 
-
 export const nextRound = async (req, res) => {
     try {
         const { gameId } = req.params;
@@ -334,7 +327,6 @@ export const nextRound = async (req, res) => {
     }
 };
 
-
 export const endGame = async (req, res) => {
     try {
         const { gameId } = req.params;
@@ -363,7 +355,6 @@ export const endGame = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to end game." });
     }
 };
-
 
 function evaluateRound(game, currentRound, user1Answer, user2Answer) {
     let user1Score = 0;
@@ -409,7 +400,6 @@ function evaluatePredictionRound(game, currentRound, user1Prediction, user2Predi
     let user1Score = 0;
     let user2Score = 0;
     const roundResultData = {};
-
     
     roundResultData.user1PredictedUser2 = user1Prediction;
     roundResultData.user2ActualAnswer = user2ActualAnswer;
@@ -433,4 +423,3 @@ function evaluatePredictionRound(game, currentRound, user1Prediction, user2Predi
 
     return { user1Score, user2Score, roundResultData };
 }
-

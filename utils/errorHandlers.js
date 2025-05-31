@@ -1,4 +1,4 @@
-export const handleDatabseError=(res,dbError)=>{
+export const handleDatabaseError=(res,dbError)=>{
     console.error("Database error",dbError)
     return res.status(500).json({ success: false, message: "Internal server error", error: "database_error" }); 
 }

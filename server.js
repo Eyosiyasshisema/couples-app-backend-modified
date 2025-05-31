@@ -5,13 +5,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 import {
-  answersRouter,
   gamesRouter as originalGamesRouter, 
-  predictionsRouter,
-  questionsRouter,
-  scoresRouter,
   usersRouter,
-} from './routes'; 
+} from './routes/index.js'; 
 
 import { verifyToken } from './middleware/jwtVerify.js'; 
 import { query } from './db.js'; 
@@ -32,7 +28,7 @@ export const io = new Server(server, {
   },
 });
 
-const userSocketMap = new Map(); 
+export const  userSocketMap = new Map(); 
 const socketUserMap = new Map(); 
 
 io.on('connection', (socket) => {
@@ -79,26 +75,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-
-app.use('/answers', answersRouter);
 app.use('/games', originalGamesRouter); 
-app.use('/predictions', predictionsRouter);
-app.use('/questions', questionsRouter);
-app.use('/scores', scoresRouter);
 app.use('/users/protected', verifyToken, usersRouter);
 app.use('/users', usersRouter);
-
-
-const gamesRouter = express.Router();
-import * as gamesController from './controllers/gamesController.js'; 
-gamesRouter.post('/create', verifyToken, gamesController.createGame);
-gamesRouter.get('/:gameId', verifyToken, gamesController.getGame);
-gamesRouter.post('/:gameId/submit-answer', verifyToken, gamesController.submitAnswer);
-gamesRouter.post('/:gameId/submit-prediction', verifyToken, gamesController.submitPrediction);
-gamesRouter.post('/:gameId/next-round', verifyToken, gamesController.nextRound);
-gamesRouter.post('/:gameId/end', verifyToken, gamesController.endGame);
-app.use('/api/games', gamesRouter); 
-
 
 app.get('/', (req, res) => {
   res.json({
