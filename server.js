@@ -75,7 +75,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use('/games', originalGamesRouter); 
+app.use('/games', verifyToken,originalGamesRouter); 
 app.use('/users/protected', verifyToken, usersRouter);
 app.use('/users', usersRouter);
 

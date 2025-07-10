@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import {query} from "../db.js";
 import jwt from "jsonwebtoken"; 
+import { validationResult } from 'express-validator';
 import {handleDatabaseError,handleHashingError,handleGeneralError,emailNotFound,errorUpdatingUserProfile} from "../utils/errorHandlers.js"
 import { v4 as uuidv4 } from "uuid";
 
@@ -50,16 +51,16 @@ export const loginUser = async (req, res) => {
                             return handleGeneralError(res, err);
                         }
                         if (isMatch) {
-                            const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+                            const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
                             const refreshToken = uuidv4()
                             try {
-                               query("UPDATE users SET refresh_token = $1 WHERE user_id = $2", [refreshToken, user.user_id]);
+                               query("UPDATE users SET refresh_token = $1 WHERE id = $2", [refreshToken, user.id]);
                                 return res.status(200).json({
                                     success: true,
                                     message: "Login successful",
-                                    accessToken,
+                                    token,
                                     refreshToken,
-                                    userId: user.user_id,
+                                    userId: user.id,
                                     username: user.username,
                                     email: user.email
                                 });
@@ -85,7 +86,7 @@ export const loginUser = async (req, res) => {
 export const getUserProfile = async (req,res)=>{
    const userId = req.userId;
    try {
-    const result = await query ("SELECT user_id, username, email, full_name, gender, date_of_birth FROM users WHERE id = $1",[userId]);
+    const result = await query ("SELECT id, username, email, full_name, gender, date_of_birth FROM users WHERE id = $1",[userId]);
     const user= result.rows[0];
     if (result.rows.length==1){
         return res.status(200).json({
@@ -126,8 +127,8 @@ export const updateUserProfile = async (req,res)=>{
         const queryText = `
         UPDATE users
         SET ${updatedFields.join(", ")}, updated_at = NOW()
-        WHERE user_id = $${paramIndex}
-        RETURNING user_id, username, email, full_name, gender, school, date_of_birth;
+        WHERE id = $${paramIndex}
+        RETURNING id, username, email, full_name, gender,  date_of_birth;
     `;
 
     const result = await query(queryText, values);
@@ -147,7 +148,7 @@ export const changePassword = async (req, res) => {
         const userId = req.userId;
         const { currentPassword, newPassword } = req.body;
         const saltRounds = 10;
-        const result = await query("SELECT password FROM users WHERE user_id = $1", [userId]);
+        const result = await query("SELECT password FROM users WHERE id = $1", [userId]);
 
         if (result.rows.length === 1) {
             const hashedPassword = result.rows[0].password;
@@ -162,7 +163,7 @@ export const changePassword = async (req, res) => {
                         } else {
                             try {
                                 const updateResult = await query(
-                                    "UPDATE users SET password = $1, updated_at = NOW() WHERE user_id = $2 RETURNING user_id, username, email, full_name, gender, school, date_of_birth",
+                                    "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2 RETURNING id, username, email, full_name, gender,  date_of_birth",
                                     [newHashedPassword, userId]
                                 );
                                 if (updateResult.rows.length === 1) {
@@ -193,7 +194,7 @@ export const logoutUser = async (req, res) => {
     const userId = req.userId; 
 
     try {
-        const result = await query("UPDATE users SET refresh_token = NULL WHERE user_id = $1", [userId]);
+        const result = await query("UPDATE users SET refresh_token = NULL WHERE id = $1", [userId]);
 
         if (result.rowCount > 0) {
             return res.status(200).json({ success: true, message: "Logout successful" });

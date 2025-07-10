@@ -11,8 +11,8 @@ async function getFullGameState(gameId) {
         'u1.username AS user1_username, u2.username AS user2_username, ' +
         'c.category_name ' +
         'FROM games g ' +
-        'JOIN users u1 ON g.user1_id = u1.user_id ' +
-        'JOIN users u2 ON g.user2_id = u2.user_id ' +
+        'JOIN users u1 ON g.user1_id = u1.id ' +
+        'JOIN users u2 ON g.user2_id = u2.id ' +
         'JOIN categories c ON g.selected_category_id = c.category_id ' +
         'WHERE g.game_id = $1;',
         [gameId]
@@ -70,7 +70,7 @@ async function getFullGameState(gameId) {
 
 export const createGame = async (req, res) => {
     try {
-        const user1Id = req.user.userId; 
+        const user1Id = req.userId; 
         const { user2Id, selectedCategoryId } = req.body; 
 
         if (!user1Id || !user2Id || !selectedCategoryId) {
@@ -122,7 +122,10 @@ export const createGame = async (req, res) => {
 export const getGame = async (req, res) => {
     try {
         const { gameId } = req.params;
-        const userId = req.user.userId; 
+        const userId = req.userId; 
+
+console.log("Requesting user ID:", userId); 
+        console.log("Requested Game ID:", gameId); 
 
         const game = await getFullGameState(gameId);
 
@@ -130,7 +133,12 @@ export const getGame = async (req, res) => {
             return res.status(404).json({ success: false, message: "Game not found." });
         }
 
+ console.log("Full Game State fetched:", JSON.stringify(game, null, 2));  
+        console.log("Game User 1 ID:", game.user1.id); 
+        console.log("Game User 2 ID:", game.user2.id); 
+
         if (game.user1.id !== userId && game.user2.id !== userId) {
+            console.log("Access denied: User ID does not match game players."); 
             return res.status(403).json({ success: false, message: "Access denied." });
         }
 
@@ -145,7 +153,7 @@ export const getGame = async (req, res) => {
 export const submitAnswer = async (req, res) => {
     try {
         const { gameId } = req.params;
-        const userId = req.user.userId; 
+        const userId = req.userId; 
         const { answer } = req.body; 
 
         if (!answer) {
@@ -209,7 +217,7 @@ export const submitAnswer = async (req, res) => {
 export const submitPrediction = async (req, res) => {
     try {
         const { gameId } = req.params;
-        const userId = req.user.userId;
+        const userId = req.userId;
         const { prediction } = req.body;
 
         if (!prediction) {
@@ -226,12 +234,10 @@ export const submitPrediction = async (req, res) => {
         }
 
         const currentRound = game.currentRound;
-        if (currentRound.question.type !== 'prediction') {
+        if (currentRound.question.type !== 'multiple_choice') {
             return res.status(400).json({ success: false, message: "This round is not a prediction type game." });
         }
-        if (currentRound.roundResult) { 
-            return res.status(400).json({ success: false, message: "Round already completed." });
-        }
+        
 
         let user1Prediction = currentRound.user1Prediction;
         let user2Prediction = currentRound.user2Prediction;
@@ -276,7 +282,7 @@ export const submitPrediction = async (req, res) => {
 export const nextRound = async (req, res) => {
     try {
         const { gameId } = req.params;
-        const userId = req.user.userId;
+        const userId = req.userId;
 
         const game = await getFullGameState(gameId);
 
@@ -330,7 +336,7 @@ export const nextRound = async (req, res) => {
 export const endGame = async (req, res) => {
     try {
         const { gameId } = req.params;
-        const userId = req.user.userId;
+        const userId = req.userId;
 
         const game = await getFullGameState(gameId);
 
