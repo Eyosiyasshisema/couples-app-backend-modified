@@ -5,34 +5,63 @@ import { validationResult } from 'express-validator';
 import {handleDatabaseError,handleHashingError,handleGeneralError,emailNotFound,errorUpdatingUserProfile} from "../utils/errorHandlers.js"
 import { v4 as uuidv4 } from "uuid";
 
-export const registerUser=async (req,res)=>{
+export const registerUser = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+        console.error("VALIDATION ERROR:", errors.array());
+        return res.status(400).json({
+            errors: errors.array()
+        });
     }
-    const { username,email, password, fullName, gender, dateOfBirth } = req.body;
-    const saltRounds=10;
-    try{
-    const checkResult= await query("SELECT email FROM users WHERE email=$1",[email])
-        if(checkResult.rows.length > 0){
-            return res.status(409).json({ success: false, message: "Email already exists", error: "email_exists" }); 
+
+    const {
+        username,
+        email,
+        password,
+        fullName,
+        gender,
+        dateOfBirth
+    } = req.body;
+    const saltRounds = 10;
+
+    try {
+        console.log(`INFO: Attempting to check if email exists for: ${email}`);
+        const checkResult = await query("SELECT email FROM users WHERE email=$1", [email])
+
+        if (checkResult.rows.length > 0) {
+            console.warn(`WARNING: Registration attempt failed, email already exists: ${email}`);
+            return res.status(409).json({
+                success: false,
+                message: "Email already exists",
+                error: "email_exists"
+            });
         } else {
-            bcrypt.hash(password,saltRounds, async (err,hashedPassword)=>{
-                if(err){
-                   handleHashingError(res,err);
-                } else{
+            console.log(`INFO: Email not found, proceeding to hash password.`);
+            bcrypt.hash(password, saltRounds, async (err, hashedPassword) => {
+                if (err) {
+                    console.error("ERROR: BCRYPT HASHING FAILED:", err);
+                    handleHashingError(res, err);
+                } else {
                     try {
+                        console.log("INFO: Attempting to insert new user into database.");
                         await query("INSERT INTO users (username,email,password,full_name,gender,date_of_birth) VALUES ($1,$2,$3,$4,$5,$6)",
-                            [username,email, hashedPassword, fullName, gender, dateOfBirth])
-                            return res.status(201).json({success: true, message: "user created"});
+                            [username, email, hashedPassword, fullName, gender, dateOfBirth])
+
+                        console.log(`SUCCESS: User registered: ${email}`);
+                        return res.status(201).json({
+                            success: true,
+                            message: "user created"
+                        });
                     } catch (dbError) {
-                       handleDatabaseError(res,dbError)
+                        console.error("ERROR: DATABASE INSERT FAILED:", dbError.message, dbError.stack);
+                        handleDatabaseError(res, dbError)
                     }
                 }
             })
         }
-    } catch (error) { 
-       return handleGeneralError(res,error)
+    } catch (error) {
+        console.error("FATAL ERROR: INITIAL DATABASE CHECK FAILED:", error.message, error.stack);
+        return handleGeneralError(res, error)
     }
 }
 
