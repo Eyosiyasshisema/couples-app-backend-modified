@@ -5,6 +5,11 @@ import { validationResult } from 'express-validator';
 import {handleDatabaseError,handleHashingError,handleGeneralError,emailNotFound,errorUpdatingUserProfile} from "../utils/errorHandlers.js"
 import { v4 as uuidv4 } from "uuid";
 
+const logAndHandleError = (res, error, customMessage) => {
+    console.error(`FATAL DEPLOYMENT CRASH: ${customMessage}`, error.message, error.stack);
+    return handleGeneralError(res, error); 
+};
+
 export const registerUser = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -60,7 +65,7 @@ export const registerUser = async (req, res) => {
             })
         }
     } catch (error) {
-        console.error("FATAL ERROR: INITIAL DATABASE CHECK FAILED:", error.message, error.stack);
+       console.error("FATAL DEPLOYMENT CRASH (General Catch):", error.message, error.stack);
         return handleGeneralError(res, error)
     }
 }
